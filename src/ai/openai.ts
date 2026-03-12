@@ -13,25 +13,38 @@ export class OpenAIProvider implements AIProvider {
     this.model = config.model || 'gpt-4';
   }
 
-  async generateCommitMessage(
+  async generateText(
     prompt: { system: string; user: string },
     onChunk?: (chunk: string) => void
   ): Promise<string> {
-    const stream = await this.client.chat.completions.create({
+    if (onChunk) {
+      const stream = await this.client.chat.completions.create({
+        model: this.model,
+        messages: [
+          { role: 'system', content: prompt.system },
+          { role: 'user', content: prompt.user }
+        ],
+        stream: true,
+      });
+
+      let fullContent = '';
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || '';
+        fullContent += content;
+        onChunk(content);
+      }
+      return fullContent.trim();
+    }
+
+    const response = await this.client.chat.completions.create({
       model: this.model,
       messages: [
         { role: 'system', content: prompt.system },
         { role: 'user', content: prompt.user }
       ],
-      stream: true,
+      stream: false,
     });
 
-    let fullContent = '';
-    for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content || '';
-      fullContent += content;
-      onChunk?.(content);
-    }
-    return fullContent.trim();
+    return (response.choices[0]?.message?.content || '').trim();
   }
 }
