@@ -3,7 +3,7 @@ import path from 'path';
 import os from 'os';
 
 export interface Config {
-  provider: 'openai' | 'anthropic' | 'ollama';
+  provider: 'openai' | 'openrouter' | 'anthropic' | 'ollama';
   apiKey?: string;
   model?: string;
   baseURL?: string;
@@ -27,5 +27,9 @@ export function saveConfig(config: Config): void {
 }
 
 export function getApiKey(): string | undefined {
-  return process.env.OPENAI_API_KEY || loadConfig().apiKey;
+  const config = loadConfig();
+  if (config.provider === 'openrouter') {
+    return process.env.OPENROUTER_API_KEY || config.apiKey;
+  }
+  return process.env.OPENAI_API_KEY || config.apiKey;
 }

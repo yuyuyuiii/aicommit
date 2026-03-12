@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import inquirer from 'inquirer';
 import ora from 'ora';
 import { getStagedDiff, hasStagedChanges } from '../git/diff';
-import { loadConfig } from '../config/store';
+import { getApiKey, loadConfig } from '../config/store';
 import { OpenAIProvider } from '../ai/openai';
 import { buildPrompt } from '../prompt/build';
 
@@ -23,10 +23,14 @@ export const commitCommand = new Command('commit')
     }
 
     const config = loadConfig();
-    const apiKey = process.env.OPENAI_API_KEY || config.apiKey;
+    const apiKey = getApiKey();
     
     if (!apiKey) {
-      spinner.fail('Please set OPENAI_API_KEY environment variable or configure apiKey.');
+      if (config.provider === 'openrouter') {
+        spinner.fail('Please set OPENROUTER_API_KEY environment variable or configure apiKey.');
+      } else {
+        spinner.fail('Please set OPENAI_API_KEY environment variable or configure apiKey.');
+      }
       process.exit(1);
     }
 
@@ -35,10 +39,11 @@ export const commitCommand = new Command('commit')
     spinner.start('Generating commit message...');
     
     let fullMessage = '';
+    const baseURL = config.baseURL || (config.provider === 'openrouter' ? 'https://openrouter.ai/api/v1' : undefined);
     const provider = new OpenAIProvider({ 
       apiKey, 
       model: config.model,
-      baseURL: config.baseURL
+      baseURL
     });
     
     try {

@@ -1,5 +1,11 @@
 #!/usr/bin/env node
 
+process.on('warning', (warning) => {
+  if (warning.name === 'DeprecationWarning') {
+    return;
+  }
+});
+
 import { Command } from 'commander';
 import inquirer from 'inquirer';
 import { commitCommand } from './commands/commit';
@@ -22,7 +28,7 @@ program.command('config')
         type: 'list',
         name: 'provider',
         message: 'Select AI provider:',
-        choices: ['openai', 'anthropic', 'ollama'],
+        choices: ['openai', 'openrouter', 'anthropic', 'ollama'],
         default: 'openai'
       },
       {
