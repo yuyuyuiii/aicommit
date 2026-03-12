@@ -1,0 +1,29 @@
+{
+  "name": "aicommit",
+  "version": "1.0.0",
+  "description": "AI-powered git commit message generator",
+  "main": "dist/index.js",
+  "bin": {
+    "aicommit": "node --no-deprecation dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts"
+  },
+  "keywords": ["git", "commit", "ai", "openai"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^11.1.0",
+    "inquirer": "^9.2.12",
+    "simple-git": "^3.22.0",
+    "openai": "^4.28.0",
+    "ora": "^7.0.1"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.7",
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  }
+}
