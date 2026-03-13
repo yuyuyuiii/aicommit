@@ -18,7 +18,7 @@ program
   .description('AI-powered git commit message generator')
   .version('1.0.0');
 
-program.addCommand(commitCommand);
+program.addCommand(commitCommand, { isDefault: true });
 
 program.command('config')
   .description('Configure aicommit')
