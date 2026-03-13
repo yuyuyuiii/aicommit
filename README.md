@@ -27,11 +27,11 @@ aicommit config
 ```
 
 ```bash
-aicommit commit
+aicommit
 ```
 
 说明：
-- 运行 `aicommit commit` 前请先 `git add` 暂存修改。
+- 运行 `aicommit` 前请先 `git add` 暂存修改。
 
 ## 配置
 配置文件默认写入 `~/.aicommit.json`，也可通过环境变量提供密钥。
