@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeDraft, renderCommitMessage } from '../src/commit/message';
+import { normalizeDraft, parseDraftOrFallback, renderCommitMessage } from '../src/commit/message';
 
 describe('renderCommitMessage', () => {
   it('renders summary + blank line + items list', () => {
@@ -32,5 +32,12 @@ describe('normalizeDraft', () => {
 
     expect(result.summary).toBe('总结');
     expect(result.items).toEqual([{ type: 'feat', scope: 'core', subject: '新增X' }]);
+  });
+});
+
+describe('parseDraftOrFallback', () => {
+  it('falls back to single-line when items empty', () => {
+    const output = parseDraftOrFallback('{"summary":"总结","items":[]}', 'fallback');
+    expect(output).toBe('总结');
   });
 });

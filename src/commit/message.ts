@@ -1,3 +1,5 @@
+import { parseJsonFromText } from '../utils/json';
+
 export interface CommitItem {
   type: string;
   scope: string;
@@ -48,4 +50,17 @@ export function normalizeDraft(input: CommitMessageDraft): CommitMessageDraft {
     );
 
   return { summary, items };
+}
+
+export function parseDraftOrFallback(raw: string, fallback: string): string {
+  try {
+    const draft = parseJsonFromText<CommitMessageDraft>(raw);
+    const normalized = normalizeDraft(draft);
+    if (!normalized.summary || normalized.items.length === 0) {
+      return normalized.summary || fallback;
+    }
+    return renderCommitMessage(normalized);
+  } catch (error) {
+    return fallback;
+  }
 }

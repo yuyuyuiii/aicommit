@@ -5,13 +5,14 @@ import simpleGit from 'simple-git';
 import { getStagedDiff, hasStagedChanges } from '../git/diff';
 import { getApiKey, loadConfig } from '../config/store';
 import { OpenAIProvider } from '../ai/openai';
+import { CommitMessageDraft, normalizeDraft, parseDraftOrFallback, renderCommitMessage } from '../commit/message';
 import { buildCandidatesPrompt, buildDraftPrompt, buildIntentPrompt, buildReviewPrompt } from '../prompt/agent';
 import { parseJsonFromText } from '../utils/json';
 
 interface ReviewResult {
   score: number;
   reasons: string[];
-  candidates: string[];
+  candidates: CommitMessageDraft[];
 }
 
 export const commitCommand = new Command('commit')
@@ -52,6 +53,7 @@ export const commitCommand = new Command('commit')
     const reviewPassScore = 4;
     let intentSummary = '';
     let draftMessage = '';
+    let draftMessageText = '';
     let review: ReviewResult | null = null;
 
     try {
@@ -63,9 +65,10 @@ export const commitCommand = new Command('commit')
 
       spinner.start('生成提交草案...');
       draftMessage = await provider.generateText(buildDraftPrompt(diff, intentSummary));
+      draftMessageText = parseDraftOrFallback(draftMessage, draftMessage);
       spinner.succeed('草案生成完成');
       console.log('\n提交草案：');
-      console.log(draftMessage);
+      console.log(draftMessageText);
 
       spinner.start('自检提交信息...');
       const reviewRaw = await provider.generateText(buildReviewPrompt(diff, intentSummary, draftMessage));
@@ -91,7 +94,7 @@ export const commitCommand = new Command('commit')
         const candidatesRaw = await provider.generateText(
           buildCandidatesPrompt(diff, intentSummary, draftMessage, reasons)
         );
-        candidates = parseJsonFromText<string[]>(candidatesRaw);
+        candidates = parseJsonFromText<CommitMessageDraft[]>(candidatesRaw);
       } catch (error) {
         console.error('备选提交信息生成失败。');
         console.error(error);
@@ -107,11 +110,23 @@ export const commitCommand = new Command('commit')
       }
     }
 
+    const formatDraft = (draft: CommitMessageDraft): string => {
+      const normalized = normalizeDraft(draft);
+      if (!normalized.summary) {
+        return '无效提交信息草案';
+      }
+      if (normalized.items.length === 0) {
+        return normalized.summary;
+      }
+      return renderCommitMessage(normalized);
+    };
+
     const choices = [
-      { name: `草案（评分 ${score}/5）: ${draftMessage}`, value: draftMessage }
+      { name: `草案（评分 ${score}/5）：\n${draftMessageText}`, value: draftMessageText }
     ];
     for (const candidate of candidates) {
-      choices.push({ name: `备选: ${candidate}`, value: candidate });
+      const candidateText = formatDraft(candidate);
+      choices.push({ name: `备选：\n${candidateText}`, value: candidateText });
     }
     choices.push({ name: '取消 - 不提交', value: '__cancel__' });
 
